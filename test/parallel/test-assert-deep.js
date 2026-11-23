@@ -1300,6 +1300,23 @@ test('Check for Errors with cause property', () => {
   assertDeepAndStrictEqual(e1, new Error('err', { cause: new Error('cause e1') }));
 });
 
+test('Reports an AssertionError for Errors with circular causes', () => {
+  const self = new Error('self');
+  self.cause = self;
+
+  const first = new Error('first');
+  const second = new Error('second', { cause: first });
+  first.cause = second;
+
+  const expected = new Error('expected');
+  for (const actual of [self, first]) {
+    assert.throws(() => assert.deepStrictEqual(actual, expected), {
+      code: 'ERR_ASSERTION',
+      name: 'AssertionError',
+    });
+  }
+});
+
 test('Check for AggregateError', () => {
   const e1 = new Error('e1');
   const e1duplicate = new Error('e1');
